@@ -1,18 +1,64 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Fetch pup data when the page loads
-    fetch("http://localhost:3000/pups") // Replace with your server's URL
-        .then(response => response.json()) // Parse the JSON response
-        .then(pups => {
-            const dogBar = document.getElementById("dog-bar");
+    const pupsUrl = "http://localhost:3000/pups"
+    const dogBar = document.querySelector("#dog-bar");
+    const dogInfo = document.querySelector("#dog-info");
+    const img = document.createElement("img");
+    const h2 = document.createElement("h2");
+    const button = document.createElement("button");
+    dogInfo.appendChild(img);
+    dogInfo.appendChild(h2);
 
-            // Iterate over each pup and create a span for their name
-            pups.forEach(pup => {
-                const pupSpan = document.createElement("span");
-                pupSpan.textContent = pup.name; // Set the span's text to the pup's name
-
-                // Append the span to the dog bar
-                dogBar.appendChild(pupSpan);
-            });
+    fetch(pupsUrl)
+        .then(resp => resp.json())
+        .then(data => {
+            data.forEach((pup) => addNameToBar(pup))
         })
-        .catch(error => console.error("Error fetching pup data:", error));
-});
+
+    function addNameToBar(pup) {
+        const span = document.createElement("span");
+        span.textContent = pup.name;
+        dogBar.appendChild(span);
+        span.addEventListener("click", () => pupClicked(pup))
+    }
+    
+    function pupClicked(pup) {
+        img.src = pup.image;
+        h2.textContent = pup.name;
+        if (dogInfo.contains(button) === false) {
+            dogInfo.appendChild(button);
+        }
+        if (pup.isGoodDog) {
+            button.textContent = "Good Dog!";
+        } else {
+            button.textContent = "Bad Dog!";
+        }
+        button.addEventListener("click", () => buttonClicked(pup.isGoodDog, pup));
+    }
+    
+        // button.addEventListener("click", () => buttonClicked(button.parentNode));
+    
+    function buttonClicked(isGoodDog, pup) {
+        let good = true;
+        if (isGoodDog) {
+            good = false;
+        }
+        fetch(`http://localhost:3000/pups/${pup.id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Accept : "application/json"
+            },
+            body: JSON.stringify({
+                "isGoodDog": good,
+            }),
+        })
+            .then(resp => resp.json())
+            .then(data => {
+                if(good){
+                    button.textContent = "Good Dog!"
+                } else {
+                    button.textContent = "Bad Dog!"
+                }
+            })
+    }
+})
